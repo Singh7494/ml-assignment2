@@ -54,7 +54,7 @@ def load_model(filename):
 
 selected = st.sidebar.selectbox(
     'Select model', list(MODELS),
-    help='All five models remain visible. The selected model appears first.',
+    help='Show detailed evaluation for this model. The comparison below includes all five models.',
 )
 st.sidebar.write('Upload test data with the 30 original, unscaled feature columns '
                  'and a target column. Preprocessing is included in each saved model.')
@@ -109,11 +109,9 @@ for name, message in errors.items():
     st.error(f'{name}: {message}')
 if y.nunique() < 2:
     st.warning('AUC is unavailable because the uploaded test data contains only one class.')
-# Display every model, with the selected model first.
-display_order = [selected] + [name for name in MODELS if name != selected]
-for model_name in display_order:
-    if model_name not in results:
-        continue
+# Show detailed evaluation only for the selected model.
+if selected in results:
+    model_name = selected
     st.divider()
     st.subheader(f'Evaluation: {model_name}')
     for col, (name, value) in zip(st.columns(6), results[model_name].items()):
