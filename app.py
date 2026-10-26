@@ -52,6 +52,10 @@ def load_model(filename):
     return joblib.load(ROOT / 'model' / filename)
 
 
+selected = st.sidebar.selectbox(
+    'Select model', list(MODELS),
+    help='All five models remain visible. The selected model appears first.',
+)
 st.sidebar.write('Upload test data with the 30 original, unscaled feature columns '
                  'and a target column. Preprocessing is included in each saved model.')
 sample = ROOT / 'test_data.csv'
@@ -105,8 +109,9 @@ for name, message in errors.items():
     st.error(f'{name}: {message}')
 if y.nunique() < 2:
     st.warning('AUC is unavailable because the uploaded test data contains only one class.')
-# Display details for all five models in the same fixed order.
-for model_name in MODELS:
+# Display every model, with the selected model first.
+display_order = [selected] + [name for name in MODELS if name != selected]
+for model_name in display_order:
     if model_name not in results:
         continue
     st.divider()
