@@ -52,7 +52,6 @@ def load_model(filename):
     return joblib.load(ROOT / 'model' / filename)
 
 
-selected = st.sidebar.selectbox('Select model', list(MODELS))
 st.sidebar.write('Upload test data with the 30 original, unscaled feature columns '
                  'and a target column. Preprocessing is included in each saved model.')
 sample = ROOT / 'test_data.csv'
@@ -61,7 +60,7 @@ if sample.exists():
                                file_name='test_data.csv', mime='text/csv')
 upload = st.sidebar.file_uploader('Upload test CSV', type=['csv'])
 if upload is None:
-    st.info('Download the test CSV, upload it, select a model, and run evaluation.')
+    st.info('Download the test CSV, upload it, and run evaluation for all five models.')
     st.stop()
 
 try:
@@ -70,8 +69,8 @@ try:
     if len(header) != len(set(header)):
         raise ValueError('Duplicate column names are not supported.')
     df = pd.read_csv(io.StringIO(content))
-    selected_model = load_model(MODELS[selected])
-    X, y = validate_data(df, selected_model.feature_names_in_)
+    reference_model = load_model(next(iter(MODELS.values())))
+    X, y = validate_data(df, reference_model.feature_names_in_)
 except Exception as exc:
     st.error(f'Cannot load test data or model: {exc}')
     st.stop()
@@ -83,7 +82,7 @@ with st.expander('Preview uploaded test data'):
         index={0: 'Malignant', 1: 'Benign'}))
 
 # Retain results across Streamlit reruns, but invalidate them when input changes.
-run_key = (upload.getvalue(), selected)
+run_key = upload.getvalue()
 if st.session_state.get('evaluation_key') != run_key:
     st.session_state.pop('evaluation_results', None)
 if st.button('Run Evaluation', type='primary'):
@@ -106,24 +105,28 @@ for name, message in errors.items():
     st.error(f'{name}: {message}')
 if y.nunique() < 2:
     st.warning('AUC is unavailable because the uploaded test data contains only one class.')
-if selected in results:
-    st.subheader(f'Evaluation: {selected}')
-    for col, (name, value) in zip(st.columns(6), results[selected].items()):
+# Display details for all five models in the same fixed order.
+for model_name in MODELS:
+    if model_name not in results:
+        continue
+    st.divider()
+    st.subheader(f'Evaluation: {model_name}')
+    for col, (name, value) in zip(st.columns(6), results[model_name].items()):
         col.metric(name, 'N/A' if pd.isna(value) else f'{value:.4f}')
     left, right = st.columns(2)
     with left:
         st.subheader('Confusion matrix')
-        matrix = confusion_matrix(y, predictions[selected], labels=[0, 1])
+        matrix = confusion_matrix(y, predictions[model_name], labels=[0, 1])
         fig, ax = plt.subplots(figsize=(5, 4))
         sns.heatmap(matrix, annot=True, fmt='d', cmap='Blues', ax=ax,
                     xticklabels=['Malignant', 'Benign'], yticklabels=['Malignant', 'Benign'])
-        ax.set(xlabel='Predicted class', ylabel='Actual class', title=selected)
+        ax.set(xlabel='Predicted class', ylabel='Actual class', title=model_name)
         fig.tight_layout()
         st.pyplot(fig)
         plt.close(fig)
     with right:
         st.subheader('Classification report')
-        report = classification_report(y, predictions[selected], labels=[0, 1],
+        report = classification_report(y, predictions[model_name], labels=[0, 1],
                     target_names=['Malignant (0)', 'Benign (1)'],
                     output_dict=True, zero_division=0)
         st.dataframe(pd.DataFrame(report).T.round(4), width='stretch')
