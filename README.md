@@ -23,7 +23,7 @@ Classify breast tumours as malignant or benign using five machine learning model
 
 ## c. GitHub Repository Link
 
-[GitHub Repository](https://github.com/YOUR_USERNAME/ml-assignment2)
+[GitHub Repository](https://github.com/Singh7494/ml-assignment2)
 
 ## d. Models Used and Evaluation Results
 
@@ -45,3 +45,7 @@ Classify breast tumours as malignant or benign using five machine learning model
 | Naive Bayes | Lower accuracy than KNN, but higher AUC (0.9868 versus 0.9788). |
 | Support Vector Machine | Ties Logistic Regression on five metrics; its AUC is slightly lower (0.9950). |
 | Overall Winner for the Dataset | Logistic Regression, using AUC to break its tie with SVM on the other five metrics. |
+
+## Live Streamlit Application
+
+[Breast Cancer Classification Dashboard](https://ml-assignment2git-cpws4tjgpj2hfvkimmsy8q.streamlit.app/)
